@@ -24,14 +24,14 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   (response) => {
     // Do something with response data
-    if(response.data.code !== 0){
-      message.error(response.data.msg);
+    if (response.data.code !== 0) {
+      message.error(response.data.message || response.data.message || '请求失败');
       return false;
     }
     return response.data;
   },
   (error) => {
-    // Do something with response error
+    // Do something with response error 
     return Promise.reject(error);
   }
 );

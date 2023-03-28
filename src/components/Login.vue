@@ -57,6 +57,7 @@
 <script>
 import { mapMutations } from 'vuex'
 import { sendCodeApi } from '@/request/api'
+import { isPhoneNum } from '@/utils'
 // 封装节流函数
 function throttle(fn, delay = 1000) {
   let timer = null
@@ -129,8 +130,7 @@ export default {
       // 1. 验证
       const reg = /^1[3456789]\d{9}$/
       if (!reg.test(this.phone)) {
-        this.messageError('手机号格式不正确')
-        return
+        return this.messageError('手机号不正确')
       }
       if (this.msg !== '成功') {
         return this.messageError('请完成滑块验证')
@@ -146,10 +146,9 @@ export default {
       if (this.msg !== '成功') {
         return this.messageError('请完成滑块验证')
       }
-      const reg = /^1[3456789]\d{9}$/
-      if (!reg.test(this.phone)) {
-        this.messageError('手机号格式不正确')
-        return
+
+      if (!isPhoneNum(this.phone)) {
+        return this.messageError('手机号不正确')
       }
 
       // 验证验证码
