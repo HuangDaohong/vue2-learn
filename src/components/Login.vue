@@ -17,7 +17,7 @@
       <div class="body">
         <div class="form" v-if="isShowForm">
           <div class="input-group">
-            <input type="text" placeholder="请输入手机号" />
+            <input type="text" placeholder="请输入手机号" v-model="phone" />
           </div>
 
           <slide-verify
@@ -26,7 +26,7 @@
             :r="10"
             :w="310"
             :h="120"
-            slider-text="向右滑动"
+            :slider-text="msg"
             @success="onSuccess"
             @fail="onFail"
             @refresh="onRefresh"
@@ -34,10 +34,19 @@
           <!-- <div>{{ msg }}</div> -->
 
           <div class="input-group">
-            <input type="text" placeholder="请输入验证码" />
-            <div class="btn getcode">获取验证码</div>
+            <input
+              type="text"
+              placeholder="请输入验证码"
+              v-model="verifycode"
+            />
+            <div class="btn getcode">
+              <span v-show="!isShowCount" @click="getVerifyCode"
+                >获取验证码</span
+              >
+              <span v-show="isShowCount">{{ count }}s</span>
+            </div>
           </div>
-          <div class="btn">登录</div>
+          <div class="btn" @click="submitLogin">登录</div>
         </div>
         <div v-else class="qrcode">22</div>
       </div>
@@ -47,14 +56,31 @@
 
 <script>
 import { mapMutations } from 'vuex'
-
+import { sendCodeApi } from '@/request/api'
+// 封装节流函数
+function throttle(fn, delay = 1000) {
+  let timer = null
+  return function (...args) {
+    if (timer) {
+      return
+    }
+    timer = setTimeout(() => {
+      fn.apply(this, args)
+      timer = null
+    }, delay)
+  }
+}
 export default {
   name: 'LoginCom',
   data() {
     return {
-      isShowForm: true,
-      // 验证码提示信息
-      msg: '',
+      isShowForm: true, // 是否显示表单
+      msg: '向右滑动', // 验证码提示信息
+      phone: '', // 用户输入手机号
+      verifycode: '', // 用户输入验证码
+      trueCode: '', // 真实验证码
+      count: 60, // 倒计时
+      isShowCount: false, // 是否显示倒计时
     }
   },
 
@@ -63,13 +89,78 @@ export default {
       changeShowLoginModal: 'showLoginModal/changeShowLoginModal',
     }),
     onSuccess() {
-      this.msg = 'login success'
+      this.msg = '成功'
     },
     onFail() {
-      this.msg = ''
+      // this.msg = '失败了'
+      this.onRefresh()
     },
     onRefresh() {
-      this.msg = ''
+      this.msg = '再试一次'
+    },
+
+    messageError: throttle(function (errorinfo) {
+      this.$message.error(errorinfo)
+    }, 500),
+
+    countDown() {
+      // 定时器叠加问题
+      // let timer = setInterval(() => {
+      //   this.count--
+      //   if (this.count === 0) {
+      //     clearInterval(timer)
+      //     this.isShowCount = false
+      //     this.count = 60
+      //   }
+      // }, 1000)
+
+      this.count--
+      if (this.count <= 0) {
+        this.isShowCount = false
+        this.count = 60
+        return
+      }
+      setTimeout(() => {
+        this.countDown()
+      }, 1000)
+    },
+
+    async getVerifyCode() {
+      // 1. 验证
+      const reg = /^1[3456789]\d{9}$/
+      if (!reg.test(this.phone)) {
+        this.messageError('手机号格式不正确')
+        return
+      }
+      if (this.msg !== '成功') {
+        return this.messageError('请完成滑块验证')
+      }
+
+      let res = await sendCodeApi({ phone: this.phone })
+      if (!res) return
+      this.isShowCount = true
+      this.countDown()
+    },
+
+    submitLogin() {
+      if (this.msg !== '成功') {
+        return this.messageError('请完成滑块验证')
+      }
+      const reg = /^1[3456789]\d{9}$/
+      if (!reg.test(this.phone)) {
+        this.messageError('手机号格式不正确')
+        return
+      }
+
+      // 验证验证码
+      if (this.verifycode !== this.trueCode) {
+        return this.messageError('验证码不正确')
+      }
+
+      // 4. 跳转到首页
+      this.$router.push('/home')
+      // 5、隐藏登录窗口
+      this.changeShowLoginModal(false)
     },
   },
 }
@@ -136,6 +227,7 @@ export default {
           padding: 0 7px;
           font-size: 16px;
           margin-left: 10px;
+          width: 95px;
         }
         .input-group {
           display: flex;

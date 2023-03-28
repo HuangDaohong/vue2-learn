@@ -1,5 +1,6 @@
 import axios from "axios";
-
+// 引入antd的message组件
+import { message } from "ant-design-vue";
 // 封装axios
 const request = axios.create({
   baseURL: "http://kumanxuan1.f3322.net:8881/cms",
@@ -23,6 +24,10 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   (response) => {
     // Do something with response data
+    if(response.data.code !== 0){
+      message.error(response.data.msg);
+      return false;
+    }
     return response.data;
   },
   (error) => {

@@ -1,5 +1,5 @@
 <template>
-  <div>这是Home <a-button type="primary"> Primary </a-button></div>
+  <div>这是Home</div>
 </template>
 <script>
 import { getJinpingApi } from '@/request/api'
