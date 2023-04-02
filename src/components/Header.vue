@@ -54,6 +54,7 @@ export default {
       this.$emit('sendClickEvent', this.newMsg)
       // 子调父的方法2：通过$parent调用父组件函数
       this.$parent.fatherMethod()
+      console.log(this.$parent, 'aaa')
       // 子调父的方法3
       this.childMethod()
     },
